@@ -1,59 +1,88 @@
 import streamlit as st
 import google.generativeai as genai
 
-# 1. Կայքի կարգավորումներ
-st.set_page_config(page_title="Դրոշների Վիկտորինա", page_icon="🇦🇲")
+# --- ԿԱՅՔԻ ԿԱՐԳԱՎՈՐՈՒՄՆԵՐ ---
+st.set_page_config(page_title="Flags.am - Բացահայտիր Աշխարհը", page_icon="🇦🇲", layout="wide")
 
-# Ստուգում ենք բանալին
+# --- ՍՏՈՒԳՈՒՄ ԵՆՔ ԲԱՆԱԼԻՆ ---
 if "GOOGLE_API_KEY" not in st.secrets:
-    st.error("Բանալին գտնված չէ Secrets-ում։")
+    st.error("Խնդրում ենք ավելացնել GOOGLE_API_KEY-ը Secrets բաժնում:")
     st.stop()
 
-# 2. Կապում ենք Google AI-ն
 genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-
-# Օգտագործում ենք ձեր ցուցակի ամենաարագ մոդելը
 model = genai.GenerativeModel('gemini-2.5-flash')
 
-st.title("🇦🇲 Դրոշների Ուրախ Վիկտորինա")
-st.write("Այս խաղը վարում է Արհեստական Բանականությունը (Gemini 2.5)։")
+# --- ՄԵՆՅՈՒԻ ՍՏԵՂԾՈՒՄ (Tabs) ---
+# Այստեղ մենք ստեղծում ենք էջերը, ինչպես ձեր դիզայնում էր
+tab1, tab2, tab3, tab4 = st.tabs(["🏠 Գլխավոր", "🧠 Վիկտորինա", "🎨 Ստեղծիր Դրոշ", "🛒 Խանութ"])
 
-# Հիշողության պահպանում
-if "question" not in st.session_state:
-    st.session_state.question = None
-
-# Ֆունկցիա՝ նոր հարց ստանալու համար
-def get_new_question():
-    with st.spinner('AI-ը մտածում է նոր հարց... 🤖'):
-        try:
-            # Խնդրում ենք AI-ին հորինել հարց
-            prompt = "Գրիր 1 հետաքրքիր վիկտորինայի հարց աշխարհի երկրների դրոշների մասին երեխաների համար հայերեն լեզվով: Միայն հարցը գրիր, առանց պատասխանի:"
-            response = model.generate_content(prompt)
-            st.session_state.question = response.text
-        except Exception as e:
-            st.error(f"Սխալ տեղի ունեցավ: {e}")
-
-# Կոճակ՝ խաղը սկսելու կամ նոր հարցի համար
-if st.button("🎲 Ստանալ Նոր Հարց"):
-    get_new_question()
-
-# Եթե հարց կա, ցույց ենք տալիս
-if st.session_state.question:
-    st.info(st.session_state.question)
+# --- ԷՋ 1: ԳԼԽԱՎՈՐ (HOME) ---
+with tab1:
+    st.title("Բացահայտիր աշխարհը դրոշների միջոցով 🌍")
+    st.markdown("### Սովորիր պատմությունը, ստուգիր գիտելիքներդ և զվարճացիր:")
     
-    # Պատասխանի դաշտ
-    user_answer = st.text_input("Գրիր քո պատասխանը այստեղ և սեղմիր Enter:", key="user_input")
+    # Գեղեցիկ բաժիններ (Cards)
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.info("📚 **Դրոշների Պատմություն**\n\nԻմացիր, թե ինչ են նշանակում գույները։")
+    with col2:
+        st.success("🧠 **Վիկտորինա**\n\nԽաղա AI-ի հետ և շահիր մրցանակներ։")
+    with col3:
+        st.warning("🛍️ **Գնել Դրոշ**\n\nՊատվիրիր որակյալ դրոշներ։")
 
-    if user_answer:
-        # Ստուգում ենք պատասխանը
-        validation_prompt = f"Հարցը՝ '{st.session_state.question}'. Երեխայի պատասխանը՝ '{user_answer}'. Ստուգիր՝ ճիշտ է թե սխալ, և պատասխանիր ուրախ հայերենով (օգտագործիր էմոջիներ):"
-        
-        with st.spinner('Ստուգում ենք...'):
+    st.divider()
+    st.write("👈 Ընտրիր բաժինը վերևի մենյուից:")
+
+# --- ԷՋ 2: ՎԻԿՏՈՐԻՆԱ (QUIZ - AI) ---
+with tab2:
+    st.header("🇦🇲 Դրոշների Ուրախ Վիկտորինա")
+    st.caption("Այս խաղը վարում է Արհեստական Բանականությունը (Gemini 2.5)։")
+
+    if "question" not in st.session_state:
+        st.session_state.question = None
+
+    def get_new_question():
+        with st.spinner('AI-ը հարց է հորինում... 🤖'):
             try:
-                res = model.generate_content(validation_prompt)
-                st.success(res.text)
-                # Եթե ճիշտ է, փուչիկներ ենք բաց թողնում
-                if "ճիշտ" in res.text.lower() or "ապրես" in res.text.lower():
-                    st.balloons()
-            except:
-                st.error("AI-ը չկարողացավ պատասխանել։")
+                prompt = "Գրիր 1 հետաքրքիր հարց դրոշների մասին երեխաների համար հայերենով: Առանց պատասխանի:"
+                response = model.generate_content(prompt)
+                st.session_state.question = response.text
+            except Exception as e:
+                st.error(f"Սխալ: {e}")
+
+    col_game1, col_game2 = st.columns([1, 2])
+    
+    with col_game1:
+        if st.button("🎲 Նոր Հարց", use_container_width=True):
+            get_new_question()
+
+    with col_game2:
+        if st.session_state.question:
+            st.info(st.session_state.question)
+            user_answer = st.text_input("Գրիր պատասխանը:", key="quiz_input")
+            
+            if user_answer:
+                with st.spinner('Ստուգում ենք...'):
+                    val_prompt = f"Հարց: {st.session_state.question}. Պատասխան: {user_answer}. Ստուգիր և պատասխանիր հայերեն:"
+                    res = model.generate_content(val_prompt)
+                    st.success(res.text)
+                    if "ճիշտ" in res.text.lower():
+                        st.balloons()
+
+# --- ԷՋ 3: ՍՏԵՂԾԻՐ ԴՐՈՇ (Creative) ---
+with tab3:
+    st.header("🎨 Նկարագրիր քո երազանքների դրոշը")
+    desc = st.text_area("Օրինակ՝ Կապույտ դրոշ, մեջտեղում ոսկե առյուծ...")
+    if st.button("Հորինել Պատմություն"):
+        if desc:
+            with st.spinner('AI-ը հորինում է այս դրոշի պատմությունը...'):
+                story_prompt = f"Երեխան հորինել է դրոշ՝ '{desc}'. Հորինիր մի փոքրիկ լեգենդ այս երկրի մասին հայերենով:"
+                story = model.generate_content(story_prompt)
+                st.write(story.text)
+
+# --- ԷՋ 4: ԽԱՆՈՒԹ (Shop) ---
+with tab4:
+    st.header("🛍️ Դրոշների Խանութ")
+    st.write("Շուտով այստեղ կլինեն Հայաստանի լավագույն դրոշները...")
+    st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Flag_of_Armenia.svg/320px-Flag_of_Armenia.svg.png", caption="Հայաստանի Եռագույն")
