@@ -1,56 +1,32 @@
 import streamlit as st
 import google.generativeai as genai
 
-# 1. Կապում ենք Google Gemini-ն (Բանալին վերցնում ենք Secrets-ից)
-try:
-    genai.configure(api_key=st.secrets["AIzaSyB63cW-E2Ivik7R4Tw6xXbgzM8Z96zlEWs"])
-except:
-    st.error("Խնդրում ենք ավելացնել GOOGLE_API_KEY-ը Streamlit Secrets բաժնում:")
-    st.stop()
+st.title("🛠 Կարգավորումների Ստուգում")
 
-# Մոդելի կարգավորում
-model = genai.GenerativeModel('gemini-1.5-flash')
+# Քայլ 1. Ստուգում ենք՝ արդյոք Secrets-ը կարդում է
+st.write("---")
+st.subheader("1. Բանալու Ստուգում")
 
-# 2. Կայքի տեսքը
-st.set_page_config(page_title="Դրոշների Վիկտորինա", page_icon="🌍")
-st.title("🌍 Դրոշների Ուրախ Վիկտորինա")
-st.write("Այս խաղը վարում է Արհեստական Բանականությունը (AI):")
-
-# 3. Հիշողության պահպանում (որպեսզի էջը թարմացնելիս հարցը չկորի)
-if "question" not in st.session_state:
-    st.session_state.question = None
-if "answer" not in st.session_state:
-    st.session_state.answer = None
-
-# 4. Նոր հարց ստանալու ֆունկցիա
-def get_new_question():
-    with st.spinner('AI-ը մտածում է նոր հարց... 🤖'):
-        prompt = "Գրիր 1 հետաքրքիր վիկտորինայի հարց աշխարհի երկրների դրոշների մասին երեխաների համար հայերեն լեզվով: Նաև տուր 3 տարբերակ (ա, բ, գ), որոնցից մեկը ճիշտ է: Վերջում գրիր ճիշտ պատասխանը առանձին տողով:"
-        response = model.generate_content(prompt)
-        st.session_state.question = response.text
-        st.session_state.answer = None # Մաքրել նախորդ պատասխանը
-
-# Կոճակ՝ նոր հարցի համար
-if st.button("🎲 Ստանալ Նոր Հարց") or st.session_state.question is None:
-    get_new_question()
-
-# 5. Ցույց տալ հարցը
-if st.session_state.question:
-    st.markdown("---")
-    st.write(st.session_state.question)
+if "GOOGLE_API_KEY" in st.secrets:
+    st.success("✅ Ծրագիրը ՏԵՍՆՈՒՄ է բանալին Secrets-ի մեջ:")
+    key = st.secrets["GOOGLE_API_KEY"]
+    # Ցույց ենք տալիս միայն առաջին 5 նիշը՝ համոզվելու համար, որ ճիշտ բանալին է
+    st.write(f"Ձեր բանալու սկիզբը՝ `{key[:5]}...`")
     
-    # Պատասխանի դաշտ
-    user_answer = st.text_input("Գրիր քո պատասխանը (օրինակ՝ ա, բ կամ երկրի անունը) և սեղմիր Enter:")
-
-    if user_answer:
-        # Ստուգում ենք պատասխանը AI-ի միջոցով
-        validation_prompt = f"Հարցը սա էր՝ '{st.session_state.question}': Երեխան պատասխանել է՝ '{user_answer}': Ասա ճիշտ է թե սխալ, և բացատրիր կարճ ու ուրախ հայերենով:"
+    # Քայլ 2. Փորձում ենք միանալ Google AI-ին
+    st.subheader("2. Google AI-ի Ստուգում")
+    try:
+        genai.configure(api_key=key)
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        response = model.generate_content("Բարև, ես աշխատում եմ։")
+        st.success("✅ Google AI-ը պատասխանեց:")
+        st.info(f"AI-ի պատասխանը: {response.text}")
+        st.balloons()
+    except Exception as e:
+        st.error("❌ Բանալին կա, բայց AI-ը չի աշխատում:")
+        st.error(f"Սխալի տեքստը: {e}")
         
-        with st.spinner('Ստուգում ենք... 🧐'):
-            result = model.generate_content(validation_prompt)
-            
-        if "ճիշտ" in result.text.lower():
-            st.success(result.text)
-            st.balloons()
-        else:
-            st.info(result.text)
+else:
+    st.error("❌ Ծրագիրը ՉԻ ՏԵՍՆՈՒՄ բանալին:")
+    st.write("Խնդրում ենք նորից ստուգել Secrets բաժինը:")
+    st.write("Այն ինչ տեսնում է ծրագիրը հիմա՝", st.secrets)
