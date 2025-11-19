@@ -1,32 +1,56 @@
 import streamlit as st
 import google.generativeai as genai
 
-st.title("🛠 Կարգավորումների Ստուգում")
+# Կայքի կարգավորումներ
+st.set_page_config(page_title="Դրոշների Վիկտորինա", page_icon="🇦🇲")
 
-# Քայլ 1. Ստուգում ենք՝ արդյոք Secrets-ը կարդում է
-st.write("---")
-st.subheader("1. Բանալու Ստուգում")
+# Ստուգում ենք բանալին
+if "GOOGLE_API_KEY" not in st.secrets:
+    st.error("Բանալին բացակայում է Secrets-ից:")
+    st.stop()
 
-if "GOOGLE_API_KEY" in st.secrets:
-    st.success("✅ Ծրագիրը ՏԵՍՆՈՒՄ է բանալին Secrets-ի մեջ:")
-    key = st.secrets["GOOGLE_API_KEY"]
-    # Ցույց ենք տալիս միայն առաջին 5 նիշը՝ համոզվելու համար, որ ճիշտ բանալին է
-    st.write(f"Ձեր բանալու սկիզբը՝ `{key[:5]}...`")
+# Կապում ենք Google AI-ն
+genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
+
+# Փոխեցինք մոդելը gemini-pro-ի, որը ավելի կայուն է
+model = genai.GenerativeModel('gemini-pro')
+
+st.title("🇦🇲 Դրոշների Ուրախ Վիկտորինա")
+st.write("Այս խաղը վարում է Արհեստական Բանականությունը (AI):")
+
+# Հիշողության պահպանում
+if "question" not in st.session_state:
+    st.session_state.question = None
+
+def get_new_question():
+    with st.spinner('AI-ը մտածում է նոր հարց... 🤖'):
+        try:
+            prompt = "Գրիր 1 հետաքրքիր վիկտորինայի հարց աշխարհի երկրների դրոշների մասին երեխաների համար հայերեն լեզվով: Միայն հարցը գրիր, առանց պատասխանի:"
+            response = model.generate_content(prompt)
+            st.session_state.question = response.text
+        except Exception as e:
+            st.error(f"Սխալ եղավ: {e}")
+
+# Կոճակ
+if st.button("🎲 Ստանալ Նոր Հարց") or st.session_state.question is None:
+    get_new_question()
+
+# Ցույց տալ հարցը և ստուգել
+if st.session_state.question:
+    st.info(st.session_state.question)
     
-    # Քայլ 2. Փորձում ենք միանալ Google AI-ին
-    st.subheader("2. Google AI-ի Ստուգում")
-    try:
-        genai.configure(api_key=key)
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        response = model.generate_content("Բարև, ես աշխատում եմ։")
-        st.success("✅ Google AI-ը պատասխանեց:")
-        st.info(f"AI-ի պատասխանը: {response.text}")
-        st.balloons()
-    except Exception as e:
-        st.error("❌ Բանալին կա, բայց AI-ը չի աշխատում:")
-        st.error(f"Սխալի տեքստը: {e}")
+    user_answer = st.text_input("Գրիր պատասխանը այստեղ և սեղմիր Enter:", key="user_input")
+
+    if user_answer:
+        validation_prompt = f"Հարցը՝ '{st.session_state.question}'. Երեխայի պատասխանը՝ '{user_answer}'. Ստուգիր՝ ճիշտ է թե սխալ, և պատասխանիր ուրախ հայերենով (օգտագործիր էմոջիներ):"
         
-else:
-    st.error("❌ Ծրագիրը ՉԻ ՏԵՍՆՈՒՄ բանալին:")
-    st.write("Խնդրում ենք նորից ստուգել Secrets բաժինը:")
-    st.write("Այն ինչ տեսնում է ծրագիրը հիմա՝", st.secrets)
+        with st.spinner('Ստուգում ենք...'):
+            try:
+                res = model.generate_content(validation_prompt)
+                if "ճիշտ" in res.text.lower() or "ապրես" in res.text.lower():
+                    st.success(res.text)
+                    st.balloons()
+                else:
+                    st.warning(res.text)
+            except:
+                st.error("AI-ը չկարողացավ պատասխանել, փորձեք նորից:")
