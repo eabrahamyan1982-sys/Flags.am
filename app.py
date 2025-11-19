@@ -3,7 +3,7 @@ import google.generativeai as genai
 
 # 1. Կապում ենք Google Gemini-ն (Բանալին վերցնում ենք Secrets-ից)
 try:
-    genai.configure(api_key=st.secrets["AIzaSyDk_Egcek8V6Lp68HpYFafOSrbYZ78K5bk"])
+    genai.configure(api_key=st.secrets["AIzaSyB63cW-E2Ivik7R4Tw6xXbgzM8Z96zlEWs"])
 except:
     st.error("Խնդրում ենք ավելացնել GOOGLE_API_KEY-ը Streamlit Secrets բաժնում:")
     st.stop()
